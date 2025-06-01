@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tính lượng thuốc sát trùng</title>
+
+  <!-- SEO cơ bản -->
+  <meta name="description" content="Công cụ tính lượng thuốc sát trùng theo tỷ lệ pha và loại thuốc (nước hoặc bột). Nhập số lít nước và nhận kết quả tức thì, dễ hiểu, dễ dùng.">
+  <meta name="keywords" content="tính thuốc sát trùng, tỷ lệ pha thuốc, thuốc nước, thuốc bột, tính lượng thuốc, công cụ pha thuốc">
+  <meta name="author" content="Hoàng Đợi">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph (Facebook, Zalo) -->
+  <meta property="og:title" content="Tính lượng thuốc sát trùng dễ dàng và chuẩn xác">
+  <meta property="og:description" content="Nhập số lít nước và tỷ lệ pha để tính lượng thuốc sát trùng cần dùng. Hỗ trợ cả thuốc nước và bột. Đơn giản và hiệu quả.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hoangdoiotp.github.io/tinh-thuoc-sat-trung">
+  <meta property="og:image" content="https://hoangdoiotp.github.io/assets/images/avatar.jpg">
+  <meta property="og:locale" content="vi_VN">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Công cụ tính thuốc sát trùng theo tỷ lệ">
+  <meta name="twitter:description" content="Tính nhanh lượng thuốc theo tỷ lệ 1:100 đến 1:1000. Hỗ trợ thuốc nước và thuốc bột.">
+  <meta name="twitter:image" content="https://hoangdoiotp.github.io/assets/images/avatar.jpg">
+
+  <!-- Tùy chọn thêm -->
+  <meta name="theme-color" content="#009CDA">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: 'Arial', sans-serif;
+      padding: 20px;
+      font-size: 1.2rem;
+      color: #0c5460;
+      max-width: 500px;
+      margin: auto;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      color: #0c5460;
+    }
+
+    h1 {
+      color: #009CDA;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      padding: 10px;
+      text-transform: uppercase;
+      font-size: 1.3rem;
+    }
+
+    .result, .error {
+      display: none;
+    }
+
+    .btn-success {
+      background-color: #009CDA;
+      border-color: #009CDA;
+      margin-bottom: 5px;
+    }
+
+    label {
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #009CDA;
+    }
+
+    .alert-info {
+      border: 1px solid #009CDA;
+      background-color: #e9f7f2;
+      color: #005a43;
+    }
+
+    .alert-danger {
+      border: 1px solid #ebccd1;
+      background-color: #f2dede;
+      color: #a94442;
+    }
+
+    .form-control {
+      border: 1px solid #009CDA;
+      color: #0c5460;
+      font-size: 1.2rem;
+    }
+
+    .form-control:focus {
+      border-color: #007a5e;
+      font-weight: bold;
+    }
+
+    footer {
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="text-center">Tính lượng thuốc sát trùng</h1>
+  <div class="container">
+    <form id="medicineForm">
+      <!-- Chọn loại thuốc -->
+      <div class="form-group">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="medicineFormType" id="liquidMedicine" value="liquid" checked />
+          <label class="form-check-label" for="liquidMedicine">Thuốc nước</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="medicineFormType" id="powderMedicine" value="powder" />
+          <label class="form-check-label" for="powderMedicine">Thuốc bột</label>
+        </div>
+      </div>
+
+      <!-- Chọn tỷ lệ thuốc -->
+      <div class="form-group">
+        <label for="medicineType">Tỷ lệ pha:</label>
+        <select class="form-control" name="medicineType" id="medicineType" required>
+          <option value="">Chọn tỷ lệ</option>
+          <option value="1:100">Tỷ lệ 1:100</option>
+          <option value="1:200">Tỷ lệ 1:200</option>
+          <option value="1:300">Tỷ lệ 1:300</option>
+          <option value="1:400">Tỷ lệ 1:400</option>
+          <option value="1:500">Tỷ lệ 1:500</option>
+          <option value="1:600">Tỷ lệ 1:600</option>
+          <option value="1:700">Tỷ lệ 1:700</option>
+          <option value="1:800">Tỷ lệ 1:800</option>
+          <option value="1:900">Tỷ lệ 1:900</option>
+          <option value="1:1000">Tỷ lệ 1:1000</option>
+        </select>
+      </div>
+
+      <!-- Nhập số lít nước -->
+      <div class="form-group">
+        <label for="litersOfWater">Số lượng nước (lít)</label>
+        <input type="number" class="form-control" name="litersOfWater" id="litersOfWater" step="0.1" placeholder="Nhập số lít nước cần sử dụng" required />
+      </div>
+
+      <div class="alert alert-info result" id="result"></div>
+      <div class="alert alert-danger error" id="error">Bạn chưa <strong>chọn tỷ lệ thuốc</strong> để hiển thị kết quả.</div>
+    </form>
+  </div>
+
+  <script>
+    function calculateMedicine() {
+      const litersOfWater = parseFloat(document.getElementById('litersOfWater').value);
+      const medicineType = document.getElementById('medicineType').value;
+      const medicineForm = document.querySelector('input[name="medicineFormType"]:checked').value;
+      const errorElement = document.getElementById('error');
+      const resultElement = document.getElementById('result');
+
+      errorElement.style.display = 'none';
+      resultElement.style.display = 'none';
+
+      if (!litersOfWater) return;
+
+      if (!medicineType) {
+        errorElement.style.display = 'block';
+        errorElement.innerHTML = "Bạn chưa <strong>Chọn tỷ lệ thuốc</strong> để hiển thị kết quả.";
+        return;
+      }
+
+      if (isNaN(litersOfWater) || litersOfWater <= 0) {
+        errorElement.style.display = 'block';
+        errorElement.innerHTML = "Bạn chưa <strong>Nhập lượng nước</strong> để hiển thị kết quả.";
+        return;
+      }
+
+      const ratios = {
+        '1:100': 100,
+        '1:200': 200,
+        '1:300': 300,
+        '1:400': 400,
+        '1:500': 500,
+        '1:600': 600,
+        '1:700': 700,
+        '1:800': 800,
+        '1:900': 900,
+        '1:1000': 1000
+      };
+
+      const ratio = ratios[medicineType];
+      const medicineVolume = (1000 / ratio) * litersOfWater;
+
+      let displayVolume;
+      if (medicineForm === 'powder') {
+        displayVolume = medicineVolume.toFixed(0) + ' gram';
+      } else {
+        displayVolume = Number.isInteger(medicineVolume) ? medicineVolume + ' ml' : medicineVolume.toFixed(2) + ' ml';
+      }
+
+      resultElement.style.display = 'block';
+      resultElement.innerHTML = `Với tỷ lệ <strong>${medicineType}</strong>, cần pha:<br><strong>${litersOfWater} lít</strong> nước = <strong>${displayVolume}</strong> thuốc`;
+    }
+
+    document.getElementById('litersOfWater').addEventListener('input', calculateMedicine);
+    document.getElementById('medicineType').addEventListener('change', calculateMedicine);
+    document.querySelectorAll('input[name="medicineFormType"]').forEach(radio => {
+      radio.addEventListener('change', calculateMedicine);
+    });
+  </script>
+
+  <footer class="text-center mt-4">
+    © 2025 Hoàng Đợi
+  </footer>
+</body>
+</html>
