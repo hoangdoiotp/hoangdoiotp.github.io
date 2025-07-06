@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghi Nhớ</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f8f9fa;
+      padding: 15px;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #343a40;
+      margin-bottom: 20px;
+    }
+    textarea, input, button {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+    textarea, input {
+      border: 1px solid #28a745;
+    }
+    textarea:focus, input:focus {
+      outline: none;
+      border: 1px solid #28a745;
+      color: #28a745;
+      background-color: #fff;
+    }
+    #addBtn, #updateBtn {
+      background-color: #28a745;
+      color: white;
+      border: none;
+    }
+    .note {
+      background: white;
+      border-left: 5px solid #28a745;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .note-text {
+      display: block;
+      margin-bottom: 6px;
+      white-space: pre-line;
+    }
+    .note small {
+      color: #6c757d;
+      font-size: 13px;
+    }
+    .note .actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+    }
+    .editBtn {
+      background-color: orange;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+    .deleteBtn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+    .no-match {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+    }
+    #showAllBtn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .filter-group {
+      display: none;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📒 Ghi Nhớ</h1>
+
+  <textarea id="noteInput" placeholder="Nhập nội dung cần ghi nhớ..." rows="4"></textarea>
+  <button id="addBtn">➕ Thêm ghi nhớ</button>
+  <button id="updateBtn" style="display: none;">✅ Cập nhật ghi nhớ</button>
+
+  <div class="filter-group" id="filterGroup">
+    <label for="monthFilter">Lọc theo tháng:</label>
+    <input type="month" id="monthFilter" />
+    <label for="keywordFilter">Tìm theo từ khóa:</label>
+    <input type="text" id="keywordFilter" placeholder="Tìm theo từ khóa..." />
+  </div>
+
+  <div id="notesList"></div>
+  <button id="showAllBtn" style="display: none;"></button>
+
+  <script>
+    const noteInput = document.getElementById('noteInput');
+    const addBtn = document.getElementById('addBtn');
+    const updateBtn = document.getElementById('updateBtn');
+    const notesList = document.getElementById('notesList');
+    const monthFilter = document.getElementById('monthFilter');
+    const keywordFilter = document.getElementById('keywordFilter');
+    const filterGroup = document.getElementById('filterGroup');
+    const showAllBtn = document.getElementById('showAllBtn');
+
+    let notes = JSON.parse(localStorage.getItem('notes')) || [];
+    let editingIndex = -1;
+    let showAll = false;
+
+    function layThoiGianHeThong() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mi = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+    }
+
+    function saveNotes() {
+      localStorage.setItem('notes', JSON.stringify(notes));
+    }
+
+    function renderNotes(month = '', keyword = '') {
+      notesList.innerHTML = '';
+      showAllBtn.style.display = 'none';
+      showAllBtn.innerText = '';
+
+      if (notes.length > 0) {
+        filterGroup.style.display = 'block';
+      } else {
+        filterGroup.style.display = 'none';
+      }
+
+      let filtered = notes
+        .map((note, index) => ({ ...note, originalIndex: index }))
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (month) {
+        filtered = filtered.filter(note => note.date.startsWith(month));
+      }
+
+      if (keyword) {
+        const kw = keyword.toLowerCase();
+        filtered = filtered.filter(note => note.text.toLowerCase().includes(kw));
+      }
+
+      const total = filtered.length;
+      let displayList = filtered;
+
+      if (!showAll && total > 10) {
+        displayList = filtered.slice(0, 10);
+        showAllBtn.style.display = 'block';
+        showAllBtn.innerText = `🔽 Hiển thị tất cả (${total})`;
+      } else if (showAll && total > 10) {
+        showAllBtn.style.display = 'block';
+        showAllBtn.innerText = `🔼 Thu gọn (${total})`;
+      }
+
+      if (displayList.length === 0) {
+        if (notes.length > 0) {
+          notesList.innerHTML = '<p class="no-match">Không có kết quả nào khớp với tìm kiếm của bạn.</p>';
+        } else {
+          notesList.innerHTML = '';
+        }
+        return;
+      }
+
+      displayList.forEach(note => {
+        const noteEl = document.createElement('div');
+        noteEl.className = 'note';
+        noteEl.innerHTML = `
+          <div class="note-text">${note.text}</div><hr>
+          <small>${note.updated ? 'Ngày cập nhật' : 'Ngày tạo'}: ${note.date}</small>
+          <div class="actions">
+            <button class="editBtn" onclick="editNote(${note.originalIndex})">✏️ Sửa</button>
+            <button class="deleteBtn" onclick="deleteNote(${note.originalIndex})">🗑 Xoá</button>
+          </div>
+        `;
+        notesList.appendChild(noteEl);
+      });
+    }
+
+    function addNote() {
+      const text = noteInput.value.trim();
+      if (text !== '') {
+        notes.push({ text, date: layThoiGianHeThong(), updated: false });
+        noteInput.value = '';
+        saveNotes();
+        showAll = false;
+        renderNotes(monthFilter.value, keywordFilter.value);
+      }
+    }
+
+    function editNote(index) {
+      noteInput.value = notes[index].text;
+      editingIndex = index;
+      addBtn.style.display = 'none';
+      updateBtn.style.display = 'block';
+
+      setTimeout(() => {
+        noteInput.focus();
+        noteInput.selectionStart = noteInput.selectionEnd = noteInput.value.length;
+      }, 0);
+    }
+
+    function updateNote() {
+      const newText = noteInput.value.trim();
+      if (newText !== '' && editingIndex >= 0) {
+        notes[editingIndex].text = newText;
+        notes[editingIndex].date = layThoiGianHeThong();
+        notes[editingIndex].updated = true;
+        saveNotes();
+        noteInput.value = '';
+        editingIndex = -1;
+        addBtn.style.display = 'block';
+        updateBtn.style.display = 'none';
+        showAll = false;
+        renderNotes(monthFilter.value, keywordFilter.value);
+      }
+    }
+
+    function deleteNote(index) {
+      if (confirm("Bạn có chắc chắn muốn xoá ghi nhớ này?")) {
+        notes.splice(index, 1);
+        saveNotes();
+        showAll = false;
+        renderNotes(monthFilter.value, keywordFilter.value);
+      }
+    }
+
+    addBtn.addEventListener('click', addNote);
+    updateBtn.addEventListener('click', updateNote);
+    keywordFilter.addEventListener('input', () => {
+      showAll = false;
+      renderNotes(monthFilter.value, keywordFilter.value);
+    });
+    monthFilter.addEventListener('input', () => {
+      showAll = false;
+      renderNotes(monthFilter.value, keywordFilter.value);
+    });
+    showAllBtn.addEventListener('click', () => {
+      showAll = !showAll;
+      renderNotes(monthFilter.value, keywordFilter.value);
+    });
+
+    renderNotes();
+  </script>
+</body>
+</html>
