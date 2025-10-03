@@ -1,159 +1,349 @@
-<!DOCTYPE html>
-<html lang="vi">
+<!DOCTYPE html><html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đồng hồ đếm thời gian đã trôi qua</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e0f7fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            transition: background-color 0.5s;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Đồng hồ đếm giờ</title>
+  <meta name="description" content="Trang web đồng hồ đếm giờ (countdown) & bấm giờ (stopwatch) – gọn nhẹ, hoạt động offline." />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #121a2b;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --accent-2: #60a5fa;
+      --danger: #ef4444;
+      --border: #1f2937;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 50% -10%, #1e293b, var(--bg));
+      color: var(--text);
+      display: grid; place-items: center; padding: 24px;
+    }
+    .wrap { width: 100%; max-width: 900px }
+    header { text-align: center; margin-bottom: 18px }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: .5px }
+    .sub { color: var(--muted); font-size: 14px }.card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+        border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.card-inner { padding: 18px }
 
-        .container {
-            text-align: center;
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s;
-        }
+.tabs { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; padding: 8px }
+.tab { padding: 10px 12px; text-align: center; border-radius: 12px; border: 1px solid var(--border);
+       cursor: pointer; user-select: none; color: var(--muted) }
+.tab.active { color: var(--text); border-color: #334155; background: #0f172a }
 
-        .container:hover {
-            transform: scale(1.05);
-        }
+.display { font-variant-numeric: tabular-nums; text-align: center; padding: 16px 12px 6px }
+.digits { font-size: clamp(42px, 10vw, 96px); font-weight: 700; letter-spacing: 3px;
+          text-shadow: 0 0 10px rgba(96,165,250,.25) }
+.label { color: var(--muted); font-size: 12px; margin-top: 8px }
 
-        h2 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            color: #00796b;
-            transition: color 0.3s;
-        }
+.grid { display: grid; gap: 12px }
+@media (min-width: 720px) { .grid.cols-3 { grid-template-columns: repeat(3, 1fr) } }
 
-        .elapsed-time {
-            font-size: 3rem;
-            color: #388e3c;
-            margin-top: 20px;
-            transition: opacity 0.5s, transform 0.5s;
-            transform: translateY(-10px);
-            opacity: 0;
-        }
+.input { width: 100%; padding: 10px 12px; border-radius: 12px; background: #0b1220;
+         border: 1px solid var(--border); color: var(--text); font-size: 16px }
+.input:focus { outline: none; border-color: var(--accent) }
 
-        .elapsed-time.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px }
+button { border: 1px solid var(--border); background: #0f172a; color: var(--text);
+         padding: 10px 14px; border-radius: 12px; font-size: 15px; cursor: pointer }
+button:hover { filter: brightness(1.15) }
+.primary { background: linear-gradient(180deg, #16a34a, #15803d); border-color: #14532d }
+.ghost { background: transparent }
+.danger { background: linear-gradient(180deg, #ef4444, #b91c1c); border-color: #7f1d1d }
+.muted { color: var(--muted) }
 
-        input[type="time"], input[type="button"] {
-            padding: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            margin-right: 10px;
-            border-radius: 5px;
-            border: 2px solid #388e3c;
-            transition: border-color 0.3s;
-        }
+.row { display: grid; gap: 12px }
+@media (min-width: 720px) { .row { grid-template-columns: 1.2fr 1fr 1fr } }
 
-        input[type="button"] {
-            background-color: #388e3c;
-            color: white;
-            cursor: pointer;
-            border: none;
-        }
+.kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px }
+.kpi { text-align: center; padding: 10px; border: 1px dashed #334155; border-radius: 10px; color: var(--muted) }
 
-        input[type="button"]:hover {
-            background-color: #2e7d32;
-        }
+.footer { margin-top: 14px; text-align: center; color: var(--muted); font-size: 12px }
 
-        #stopBtn {
-            background-color: #d32f2f;
-            border-color: #d32f2f;
-        }
-
-        #stopBtn:hover {
-            background-color: #c62828;
-        }
-
-        /* Thay đổi màu nền khi dừng */
-        .stopped {
-            background-color: #f8bbd0;
-        }
-    </style>
+  </style>
 </head>
 <body>
-    <div class="container" id="container">
-        <h2>Đồng hồ đếm giờ</h2>
-        <div>
-            <label for="start_time">Chọn thời gian bắt đầu:</label>
-            <input type="time" id="start_time" onchange="startTimer()" required>
+  <div class="wrap">
+    <header>
+      <h1>Đồng hồ đếm giờ</h1>
+      <div class="sub">Đếm ngược & Bấm giờ – chạy offline, gọn nhẹ, lưu cài đặt gần nhất.</div>
+    </header><div class="card">
+  <div class="tabs">
+    <div id="tab-countdown" class="tab active" onclick="switchTab('countdown')">Đếm ngược</div>
+    <div id="tab-stopwatch" class="tab" onclick="switchTab('stopwatch')">Bấm giờ</div>
+  </div>
+  <div class="card-inner">
+    <!-- Countdown Panel -->
+    <section id="panel-countdown">
+      <div class="display">
+        <div id="countdownDigits" class="digits">00:00:00</div>
+        <div class="label">Giờ : Phút : Giây</div>
+      </div>
+
+      <div class="row">
+        <div class="grid">
+          <label class="muted">Nhập thời lượng (H:M:S)</label>
+          <div class="grid cols-3">
+            <input id="cd-h" class="input" type="number" min="0" value="0" aria-label="Giờ" />
+            <input id="cd-m" class="input" type="number" min="0" max="59" value="5" aria-label="Phút" />
+            <input id="cd-s" class="input" type="number" min="0" max="59" value="0" aria-label="Giây" />
+          </div>
         </div>
-        <div class="elapsed-time" id="elapsed-time">00:00:00</div>
-        <input type="button" id="stopBtn" value="Dừng" onclick="stopTimer()">
-    <footer class="text-center mt-4">
-        © 2025 - Hoàng Đợi
-    </footer>
-    </div>
+        <div class="grid">
+          <label class="muted">Hoặc đếm đến mốc thời gian</label>
+          <input id="cd-target" class="input" type="datetime-local" />
+        </div>
+        <div class="grid">
+          <label class="muted">Tùy chọn</label>
+          <select id="cd-finish" class="input">
+            <option value="beep">Kêu beep khi kết thúc</option>
+            <option value="loop">Beep lặp cho đến khi dừng</option>
+            <option value="silent">Im lặng</option>
+          </select>
+        </div>
+      </div>
 
-    <script>
-        let timerInterval;
+      <div class="btn-row">
+        <button class="primary" onclick="startCountdown()">Bắt đầu</button>
+        <button id="cdPauseBtn" class="ghost" onclick="pauseCountdown()" disabled>Tạm dừng</button>
+        <button class="ghost" onclick="resumeCountdown()" disabled id="cdResumeBtn">Tiếp tục</button>
+        <button class="danger" onclick="resetCountdown()">Đặt lại</button>
+        <button class="ghost" onclick="quickSet(5)">+5 phút</button>
+        <button class="ghost" onclick="quickSet(10)">+10 phút</button>
+        <button class="ghost" onclick="quickSet(25)">Pomodoro 25’</button>
+      </div>
 
-        function startTimer() {
-            // Xóa bất kỳ interval cũ nào
-            clearInterval(timerInterval);
+      <div class="kpis">
+        <div class="kpi">Đã chạy: <b id="cdRuns">0</b></div>
+        <div class="kpi">Tổng thời gian: <b id="cdTotal">00:00:00</b></div>
+        <div class="kpi">Lần gần nhất: <b id="cdLast">—</b></div>
+      </div>
+    </section>
 
-            // Lấy thời gian bắt đầu từ người dùng nhập vào
-            let startTimeInput = document.getElementById('start_time').value;
-            if (!startTimeInput) {
-                alert('Vui lòng nhập thời gian bắt đầu!');
-                return;
-            }
+    <!-- Stopwatch Panel -->
+    <section id="panel-stopwatch" style="display:none">
+      <div class="display">
+        <div id="swDigits" class="digits">00:00:00.000</div>
+        <div class="label">Giờ : Phút : Giây . Mili</div>
+      </div>
 
-            // Chuyển thời gian bắt đầu thành timestamp
-            let startTimestamp = new Date();
-            let [startHours, startMinutes] = startTimeInput.split(':');
-            startTimestamp.setHours(startHours, startMinutes, 0);
+      <div class="btn-row">
+        <button class="primary" onclick="startSW()">Bắt đầu</button>
+        <button class="ghost" onclick="lapSW()">Lap</button>
+        <button class="ghost" onclick="pauseSW()" id="swPauseBtn" disabled>Tạm dừng</button>
+        <button class="ghost" onclick="resumeSW()" id="swResumeBtn" disabled>Tiếp tục</button>
+        <button class="danger" onclick="resetSW()">Đặt lại</button>
+      </div>
 
-            // Hiện thời gian trôi qua
-            document.getElementById('elapsed-time').classList.add('show');
+      <div id="laps" style="margin-top:10px; max-height:180px; overflow:auto; border:1px dashed #334155; border-radius:10px; padding:8px"></div>
+    </section>
+  </div>
+</div>
 
-            // Bắt đầu tính toán và hiển thị thời gian trôi qua
-            timerInterval = setInterval(function() {
-                let currentTimestamp = new Date();
+<div class="footer">© 2025 - Hoàng Đợi</div>
 
-                // Tính toán số giây đã trôi qua
-                let timeDiffInSeconds = Math.floor((currentTimestamp - startTimestamp) / 1000);
+  </div>  <script>
+    // ===== Helpers =====
+    const two = n => String(n).padStart(2,'0');
+    const three = n => String(n).padStart(3,'0');
 
-                if (timeDiffInSeconds < 0) {
-                    timeDiffInSeconds += 24 * 3600; // Nếu thời gian qua ngày thì cộng thêm 24 giờ
-                }
+    const store = {
+      set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
+      get(k, def){ try { return JSON.parse(localStorage.getItem(k)) ?? def } catch { return def } }
+    };
 
-                // Chuyển đổi thời gian trôi qua thành giờ, phút và giây
-                let hours = Math.floor(timeDiffInSeconds / 3600);
-                let minutes = Math.floor((timeDiffInSeconds % 3600) / 60);
-                let seconds = timeDiffInSeconds % 60;
+    function fmtHMS(totalMs) {
+      totalMs = Math.max(0, totalMs);
+      const ms = totalMs % 1000;
+      const totalSec = Math.floor(totalMs / 1000);
+      const s = totalSec % 60;
+      const totalMin = Math.floor(totalSec / 60);
+      const m = totalMin % 60;
+      const h = Math.floor(totalMin / 60);
+      return `${two(h)}:${two(m)}:${two(s)}${totalMs<1000?'.'+three(ms):''}`;
+    }
 
-                // Hiển thị thời gian trôi qua
-                document.getElementById('elapsed-time').innerHTML = 
-                    (hours < 10 ? "0" + hours : hours) + ":" +
-                    (minutes < 10 ? "0" + minutes : minutes) + ":" +
-                    (seconds < 10 ? "0" + seconds : seconds);
-            }, 1000);
+    // ===== Tabs =====
+    function switchTab(id){
+      document.getElementById('panel-countdown').style.display = id==='countdown'?'block':'none';
+      document.getElementById('panel-stopwatch').style.display = id==='stopwatch'?'block':'none';
+      document.getElementById('tab-countdown').classList.toggle('active', id==='countdown');
+      document.getElementById('tab-stopwatch').classList.toggle('active', id==='stopwatch');
+      store.set('timer_tab', id);
+    }
+
+    // ===== Countdown =====
+    let cdTimer = null, cdRemaining = 0, cdState = 'idle';
+    let cdAccumulated = store.get('cd_total', 0), cdRuns = store.get('cd_runs', 0), cdLast = store.get('cd_last', null);
+
+    const cdDigits = document.getElementById('countdownDigits');
+    const cdPauseBtn = document.getElementById('cdPauseBtn');
+    const cdResumeBtn = document.getElementById('cdResumeBtn');
+    const elH = document.getElementById('cd-h');
+    const elM = document.getElementById('cd-m');
+    const elS = document.getElementById('cd-s');
+    const elTarget = document.getElementById('cd-target');
+    const elFinish = document.getElementById('cd-finish');
+
+    function updateCdDisplay(ms){ cdDigits.textContent = fmtHMS(ms).replace(/\.\d{3}$/,''); }
+
+    function readDurationMs(){
+      const h = parseInt(elH.value||0,10);
+      const m = parseInt(elM.value||0,10);
+      const s = parseInt(elS.value||0,10);
+      return ((h*60 + m)*60 + s) * 1000;
+    }
+
+    function startCountdown(){
+      let ms = readDurationMs();
+      if (elTarget.value) {
+        const t = new Date(elTarget.value).getTime();
+        const now = Date.now();
+        ms = Math.max(0, t - now);
+      }
+      if (!ms) { alert('Vui lòng nhập thời lượng > 0 hoặc chọn mốc thời gian.'); return; }
+      cdRemaining = ms;
+      cdState = 'running';
+      const startedAt = Date.now();
+      clearInterval(cdTimer);
+      cdTimer = setInterval(() => {
+        const elapsed = Date.now() - startedAt;
+        const left = cdRemaining - elapsed;
+        updateCdDisplay(left);
+        if (left <= 0) {
+          clearInterval(cdTimer);
+          cdState = 'done';
+          updateCdDisplay(0);
+          cdRuns++; store.set('cd_runs', cdRuns);
+          const lastDur = readDurationMs();
+          cdAccumulated += lastDur; store.set('cd_total', cdAccumulated);
+          cdLast = new Date().toLocaleString(); store.set('cd_last', cdLast);
+          updateKpis();
+          notifyFinish();
         }
+      }, 50);
+      cdPauseBtn.disabled = false; cdResumeBtn.disabled = true;
+      store.set('cd_preset', {h: elH.value, m: elM.value, s: elS.value, target: elTarget.value, finish: elFinish.value});
+    }
 
-        function stopTimer() {
-            // Xóa interval để dừng đồng hồ
-            clearInterval(timerInterval);
-            // Thay đổi màu nền khi dừng
-            document.getElementById('container').classList.add('stopped');
+    function pauseCountdown(){
+      if (cdState !== 'running') return;
+      cdState = 'paused';
+      // recompute remaining by reading display (safer to track time)
+      const parts = cdDigits.textContent.split(':').map(Number);
+      cdRemaining = ((parts[0]*60 + parts[1])*60 + parts[2]) * 1000;
+      clearInterval(cdTimer);
+      cdPauseBtn.disabled = true; cdResumeBtn.disabled = false;
+    }
+
+    function resumeCountdown(){
+      if (cdState !== 'paused') return;
+      const startedAt = Date.now();
+      cdState = 'running';
+      clearInterval(cdTimer);
+      cdTimer = setInterval(() => {
+        const left = cdRemaining - (Date.now() - startedAt);
+        updateCdDisplay(left);
+        if (left <= 0) {
+          clearInterval(cdTimer);
+          cdState = 'done';
+          updateCdDisplay(0);
+          cdRuns++; store.set('cd_runs', cdRuns);
+          cdAccumulated += cdRemaining; store.set('cd_total', cdAccumulated);
+          cdLast = new Date().toLocaleString(); store.set('cd_last', cdLast);
+          updateKpis();
+          notifyFinish();
         }
-    </script>
-    <br>
-</body>
+      }, 50);
+      cdPauseBtn.disabled = false; cdResumeBtn.disabled = true;
+    }
+
+    function resetCountdown(){
+      clearInterval(cdTimer); cdTimer = null; cdState = 'idle';
+      updateCdDisplay(readDurationMs());
+      cdPauseBtn.disabled = true; cdResumeBtn.disabled = true;
+    }
+
+    function quickSet(min){
+      elTarget.value = '';
+      elH.value = Math.floor(min/60);
+      elM.value = min%60;
+      elS.value = 0;
+      updateCdDisplay(readDurationMs());
+    }
+
+    // Sound / Notification when finished
+    let loopInterval = null;
+    function notifyFinish(){
+      const mode = elFinish.value;
+      if (mode === 'silent') return;
+      const playBeep = () => {
+        const ctx = new (window.AudioContext||window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = 880; // A5
+        o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+        o.start(); o.stop(ctx.currentTime + 0.45);
+      };
+      playBeep();
+      if (mode === 'loop') {
+        clearInterval(loopInterval);
+        loopInterval = setInterval(playBeep, 1200);
+        // auto stop loop on any interaction
+        const stop = () => { clearInterval(loopInterval); loopInterval=null; window.removeEventListener('click', stop); window.removeEventListener('keydown', stop); };
+        window.addEventListener('click', stop); window.addEventListener('keydown', stop);
+      }
+    }
+
+    function updateKpis(){
+      document.getElementById('cdRuns').textContent = cdRuns;
+      document.getElementById('cdTotal').textContent = fmtHMS(cdAccumulated).replace(/\.\d{3}$/,'');
+      document.getElementById('cdLast').textContent = cdLast || '—';
+    }
+
+    // ===== Stopwatch =====
+    let swTimer=null, swStart=0, swElapsed=0, swState='idle', lapIdx=1;
+    const swDigits = document.getElementById('swDigits');
+    const swPauseBtn = document.getElementById('swPauseBtn');
+    const swResumeBtn = document.getElementById('swResumeBtn');
+    const lapsDiv = document.getElementById('laps');
+
+    function renderSW(ms){
+      const ms3 = ms % 1000; const s = Math.floor(ms/1000) % 60; const m = Math.floor(ms/60000) % 60; const h=Math.floor(ms/3600000);
+      swDigits.textContent = `${two(h)}:${two(m)}:${two(s)}.${three(ms3)}`;
+    }
+
+    function tickSW(){ renderSW(swElapsed + (Date.now()-swStart)); }
+
+    function startSW(){
+      if (swState==='running') return;
+      swStart = Date.now();
+      swState='running';
+      clearInterval(swTimer);
+      swTimer = setInterval(tickSW, 16);
+      swPauseBtn.disabled=false; swResumeBtn.disabled=true;
+    }
+    function lapSW(){ if(swState!=='running') return; const t=swElapsed+(Date.now()-swStart); const el=document.createElement('div'); el.textContent=`Lap ${lapIdx++}: ${fmtHMS(t)}`; lapsDiv.prepend(el); }
+    function pauseSW(){ if(swState!=='running') return; swElapsed += Date.now()-swStart; clearInterval(swTimer); swState='paused'; swPauseBtn.disabled=true; swResumeBtn.disabled=false; }
+    function resumeSW(){ if(swState!=='paused') return; swStart=Date.now(); swState='running'; clearInterval(swTimer); swTimer=setInterval(tickSW,16); swPauseBtn.disabled=false; swResumeBtn.disabled=true; }
+    function resetSW(){ clearInterval(swTimer); swTimer=null; swStart=0; swElapsed=0; swState='idle'; renderSW(0); lapsDiv.innerHTML=''; lapIdx=1; swPauseBtn.disabled=true; swResumeBtn.disabled=true; }
+
+    // ===== Init =====
+    (function init(){
+      const preset = store.get('cd_preset', null);
+      if (preset) { elH.value=preset.h; elM.value=preset.m; elS.value=preset.s; elTarget.value=preset.target||''; elFinish.value=preset.finish||'beep'; }
+      updateCdDisplay(readDurationMs());
+      updateKpis();
+      const lastTab = store.get('timer_tab','countdown');
+      switchTab(lastTab);
+    })();
+  </script></body>
 </html>
