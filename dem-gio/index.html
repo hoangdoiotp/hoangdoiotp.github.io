@@ -1,70 +1,85 @@
-<!DOCTYPE html><html lang="vi">
+<!DOCTYPE html>
+<!--
+  Released under CC0 1.0 Universal (Public Domain Dedication)
+  You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.
+  See: https://creativecommons.org/publicdomain/zero/1.0/
+-->
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Đồng hồ đếm giờ</title>
   <meta name="description" content="Trang web đồng hồ đếm giờ (countdown) & bấm giờ (stopwatch) – gọn nhẹ, hoạt động offline." />
+  <title>Đồng hồ đếm giờ</title>
   <style>
     :root {
-      --bg: #0b1220;
-      --card: #121a2b;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --accent: #22c55e;
-      --accent-2: #60a5fa;
-      --danger: #ef4444;
-      --border: #1f2937;
-      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --bg: #f9fafb;
+      --card: #ffffffcc;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-2: #3b82f6;
+      --danger: #dc2626;
+      --border: #e5e7eb;
+      --shadow: 0 8px 20px rgba(0,0,0,.08);
+      --radius: 12px;
+      --spacing: 12px;
     }
     * { box-sizing: border-box }
     html, body { height: 100% }
     body {
       margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 800px at 50% -10%, #1e293b, var(--bg));
+      background: linear-gradient(180deg,#f9fafb,#f3f4f6);
       color: var(--text);
       display: grid; place-items: center; padding: 24px;
     }
     .wrap { width: 100%; max-width: 900px }
     header { text-align: center; margin-bottom: 18px }
     h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: .5px }
-    .sub { color: var(--muted); font-size: 14px }.card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-        border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
-.card-inner { padding: 18px }
+    .sub { color: var(--muted); font-size: 14px }
 
-.tabs { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; padding: 8px }
-.tab { padding: 10px 12px; text-align: center; border-radius: 12px; border: 1px solid var(--border);
-       cursor: pointer; user-select: none; color: var(--muted) }
-.tab.active { color: var(--text); border-color: #334155; background: #0f172a }
+    .card { background: rgba(255,255,255,0.9); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(8px); }
+    .card-inner { padding: 18px }
 
-.display { font-variant-numeric: tabular-nums; text-align: center; padding: 16px 12px 6px }
-.digits { font-size: clamp(42px, 10vw, 96px); font-weight: 700; letter-spacing: 3px;
-          text-shadow: 0 0 10px rgba(96,165,250,.25) }
-.label { color: var(--muted); font-size: 12px; margin-top: 8px }
+    .tabs { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; padding: 8px }
+    .tab { padding: 12px; text-align: center; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; user-select: none; color: var(--muted); background: #ffffff; transition: background .15s ease, color .15s ease; }
+    .tab.active { border-color: var(--accent); background: var(--accent-2); color: #fff; font-weight: 600; }
 
-.grid { display: grid; gap: 12px }
-@media (min-width: 720px) { .grid.cols-3 { grid-template-columns: repeat(3, 1fr) } }
+    .display { font-variant-numeric: tabular-nums; text-align: center; padding: 16px 12px 6px }
+    .digits { font-size: clamp(42px, 10vw, 92px); font-weight: 800; letter-spacing: 1px; color: #111827; text-shadow: none; }
+    .label { color: var(--muted); font-size: 12px; margin-top: 6px; font-style: italic }
 
-.input { width: 100%; padding: 10px 12px; border-radius: 12px; background: #0b1220;
-         border: 1px solid var(--border); color: var(--text); font-size: 16px }
-.input:focus { outline: none; border-color: var(--accent) }
+    .grid { display: grid; gap: 12px }
+    @media (min-width: 720px) { .grid.cols-3 { grid-template-columns: repeat(3, 1fr) } }
 
-.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px }
-button { border: 1px solid var(--border); background: #0f172a; color: var(--text);
-         padding: 10px 14px; border-radius: 12px; font-size: 15px; cursor: pointer }
-button:hover { filter: brightness(1.15) }
-.primary { background: linear-gradient(180deg, #16a34a, #15803d); border-color: #14532d }
-.ghost { background: transparent }
-.danger { background: linear-gradient(180deg, #ef4444, #b91c1c); border-color: #7f1d1d }
-.muted { color: var(--muted) }
+    .input { width: 100%; padding: 12px 14px; border-radius: 8px; background: #ffffff; border: 1px solid var(--border); color: var(--text); font-size: 16px }
+    .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15) }
 
-.row { display: grid; gap: 12px }
-@media (min-width: 720px) { .row { grid-template-columns: 1.2fr 1fr 1fr } }
+    .btn-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 14px; }
+    button { border: 1px solid var(--border); background: #ffffff; color: var(--text); padding: 12px; border-radius: 8px; font-size: 15px; cursor: pointer; transition: box-shadow .15s ease; }
+    button:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+    .primary { background: linear-gradient(180deg,#3b82f6,#2563eb); color: #fff; border-color: #2563eb }
+    .ghost { background: transparent; border-color: #d1d5db }
+    .danger { background: linear-gradient(180deg,#ef4444,#dc2626); color: #fff; border-color: #b91c1c }
 
-.kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px }
-.kpi { text-align: center; padding: 10px; border: 1px dashed #334155; border-radius: 10px; color: var(--muted) }
+    .row { display: grid; gap: 12px }
+    @media (min-width: 720px) { .row { grid-template-columns: 1.2fr 1fr 1fr } }
 
-.footer { margin-top: 14px; text-align: center; color: var(--muted); font-size: 12px }
+    .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px }
+    .kpi { text-align: center; padding: 10px; border: 1px dashed #334155; border-radius: 10px; color: var(--muted) }
 
+    .footer { margin-top: 14px; text-align: center; color: var(--muted); font-size: 12px }
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:10000}
+    .modal{width:min(520px,92vw);background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.18);overflow:hidden}
+    .modal-header{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:600;color:#111827}
+    .modal-body{padding:14px 16px;color:#374151}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border)}
+    .modal input[type="text"], .modal input[type="number"], .modal input[type="datetime-local"], .modal textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:#111827}
+    .modal .btn{border:1px solid var(--border);background:#fff;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .modal .btn.primary{background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff;border-color:#2563eb}
+    .modal .btn.ghost{background:transparent}
+    .modal .btn.danger{background:linear-gradient(180deg,#ef4444,#dc2626);color:#fff;border-color:#b91c1c}
   </style>
 </head>
 <body>
@@ -72,82 +87,100 @@ button:hover { filter: brightness(1.15) }
     <header>
       <h1>Đồng hồ đếm giờ</h1>
       <div class="sub">Đếm ngược & Bấm giờ – chạy offline, gọn nhẹ, lưu cài đặt gần nhất.</div>
-    </header><div class="card">
-  <div class="tabs">
-    <div id="tab-countdown" class="tab active" onclick="switchTab('countdown')">Đếm ngược</div>
-    <div id="tab-stopwatch" class="tab" onclick="switchTab('stopwatch')">Bấm giờ</div>
-  </div>
-  <div class="card-inner">
-    <!-- Countdown Panel -->
-    <section id="panel-countdown">
-      <div class="display">
-        <div id="countdownDigits" class="digits">00:00:00</div>
-        <div class="label">Giờ : Phút : Giây</div>
-      </div>
+    </header>
 
-      <div class="row">
-        <div class="grid">
-          <label class="muted">Nhập thời lượng (H:M:S)</label>
-          <div class="grid cols-3">
-            <input id="cd-h" class="input" type="number" min="0" value="0" aria-label="Giờ" />
-            <input id="cd-m" class="input" type="number" min="0" max="59" value="5" aria-label="Phút" />
-            <input id="cd-s" class="input" type="number" min="0" max="59" value="0" aria-label="Giây" />
+    <div class="card">
+      <div class="tabs">
+        <div id="tab-countdown" class="tab active" onclick="switchTab('countdown')">Đếm ngược</div>
+        <div id="tab-stopwatch" class="tab" onclick="switchTab('stopwatch')">Bấm giờ</div>
+      </div>
+      <div class="card-inner">
+        <!-- Countdown Panel -->
+        <section id="panel-countdown">
+          <div class="display">
+            <div id="countdownDigits" class="digits">00:00:00</div>
+            <div class="label">Giờ : Phút : Giây</div>
           </div>
-        </div>
-        <div class="grid">
-          <label class="muted">Hoặc đếm đến mốc thời gian</label>
-          <input id="cd-target" class="input" type="datetime-local" />
-        </div>
-        <div class="grid">
-          <label class="muted">Tùy chọn</label>
-          <select id="cd-finish" class="input">
-            <option value="beep">Kêu beep khi kết thúc</option>
-            <option value="loop">Beep lặp cho đến khi dừng</option>
-            <option value="silent">Im lặng</option>
-          </select>
-        </div>
-      </div>
 
-      <div class="btn-row">
-        <button class="primary" onclick="startCountdown()">Bắt đầu</button>
-        <button id="cdPauseBtn" class="ghost" onclick="pauseCountdown()" disabled>Tạm dừng</button>
-        <button class="ghost" onclick="resumeCountdown()" disabled id="cdResumeBtn">Tiếp tục</button>
-        <button class="danger" onclick="resetCountdown()">Đặt lại</button>
-        <button class="ghost" onclick="quickSet(5)">+5 phút</button>
-        <button class="ghost" onclick="quickSet(10)">+10 phút</button>
-        <button class="ghost" onclick="quickSet(25)">Pomodoro 25’</button>
-      </div>
+          <div class="row">
+            <div class="grid">
+              <label class="muted">Nhập thời lượng (H:M:S)</label>
+              <div class="grid cols-3">
+                <input id="cd-h" class="input" type="number" min="0" value="0" aria-label="Giờ" />
+                <input id="cd-m" class="input" type="number" min="0" max="59" value="5" aria-label="Phút" />
+                <input id="cd-s" class="input" type="number" min="0" max="59" value="0" aria-label="Giây" />
+              </div>
+            </div>
+            <div class="grid">
+              <label class="muted">Hoặc đếm đến mốc thời gian</label>
+              <input id="cd-target" class="input" type="datetime-local" />
+            </div>
+            <div class="grid">
+              <label class="muted">Tùy chọn</label>
+              <select id="cd-finish" class="input">
+                <option value="beep">Kêu beep khi kết thúc</option>
+                <option value="loop">Beep lặp cho đến khi dừng</option>
+                <option value="silent">Im lặng</option>
+              </select>
+            </div>
+          </div>
 
-      <div class="kpis">
-        <div class="kpi">Đã chạy: <b id="cdRuns">0</b></div>
-        <div class="kpi">Tổng thời gian: <b id="cdTotal">00:00:00</b></div>
-        <div class="kpi">Lần gần nhất: <b id="cdLast">—</b></div>
-      </div>
-    </section>
+          <div class="btn-row">
+            <button class="primary" onclick="startCountdown()">Bắt đầu</button>
+            <button id="cdPauseBtn" class="ghost" onclick="pauseCountdown()" disabled>Tạm dừng</button>
+            <button class="ghost" onclick="resumeCountdown()" disabled id="cdResumeBtn">Tiếp tục</button>
+            <button class="danger" onclick="resetCountdown()">Đặt lại</button>
+            <button class="ghost" onclick="quickSet(5)">+5 phút</button>
+            <button class="ghost" onclick="quickSet(10)">+10 phút</button>
+            <button class="ghost" onclick="quickSet(25)">Pomodoro 25’</button>
+          </div>
 
-    <!-- Stopwatch Panel -->
-    <section id="panel-stopwatch" style="display:none">
-      <div class="display">
-        <div id="swDigits" class="digits">00:00:00.000</div>
-        <div class="label">Giờ : Phút : Giây . Mili</div>
-      </div>
+          <div class="kpis">
+            <div class="kpi">Đã chạy: <b id="cdRuns">0</b></div>
+            <div class="kpi">Tổng thời gian: <b id="cdTotal">00:00:00</b></div>
+            <div class="kpi">Lần gần nhất: <b id="cdLast">—</b></div>
+          </div>
+        </section>
 
-      <div class="btn-row">
-        <button class="primary" onclick="startSW()">Bắt đầu</button>
-        <button class="ghost" onclick="lapSW()">Lap</button>
-        <button class="ghost" onclick="pauseSW()" id="swPauseBtn" disabled>Tạm dừng</button>
-        <button class="ghost" onclick="resumeSW()" id="swResumeBtn" disabled>Tiếp tục</button>
-        <button class="danger" onclick="resetSW()">Đặt lại</button>
-      </div>
+        <!-- Stopwatch Panel -->
+        <section id="panel-stopwatch" style="display:none">
+          <div class="display">
+            <div id="swDigits" class="digits">00:00:00.000</div>
+            <div class="label">Giờ : Phút : Giây . Mili</div>
+          </div>
 
-      <div id="laps" style="margin-top:10px; max-height:180px; overflow:auto; border:1px dashed #334155; border-radius:10px; padding:8px"></div>
-    </section>
+          <div class="btn-row">
+            <button class="primary" onclick="startSW()">Bắt đầu</button>
+            <button class="ghost" onclick="lapSW()">Lap</button>
+            <button class="ghost" onclick="pauseSW()" id="swPauseBtn" disabled>Tạm dừng</button>
+            <button class="ghost" onclick="resumeSW()" id="swResumeBtn" disabled>Tiếp tục</button>
+            <button class="danger" onclick="resetSW()">Đặt lại</button>
+          </div>
+
+          <div id="laps" style="margin-top:10px; max-height:180px; overflow:auto; border:1px dashed #334155; border-radius:10px; padding:8px"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="footer">© 2025 - Hoàng Đợi</div>
   </div>
-</div>
 
-<div class="footer">© 2025 - Hoàng Đợi</div>
+  <!-- Toast notify -->
+  <div id="notify" style="position:fixed;bottom:24px;right:24px;min-width:220px;max-width:300px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.12);padding:12px 16px;color:var(--text);font-size:14px;display:none;z-index:9999"></div>
 
-  </div>  <script>
+  <!-- Modal system -->
+  <div id="modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header" id="modal-title">Thông báo</div>
+      <div class="modal-body" id="modal-content">Nội dung</div>
+      <div class="modal-actions" id="modal-actions">
+        <button class="btn" id="modal-cancel">Hủy</button>
+        <button class="btn primary" id="modal-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     // ===== Helpers =====
     const two = n => String(n).padStart(2,'0');
     const three = n => String(n).padStart(3,'0');
@@ -206,7 +239,7 @@ button:hover { filter: brightness(1.15) }
         const now = Date.now();
         ms = Math.max(0, t - now);
       }
-      if (!ms) { alert('Vui lòng nhập thời lượng > 0 hoặc chọn mốc thời gian.'); return; }
+      if (!ms) { infoModal('Vui lòng nhập thời lượng > 0 hoặc chọn mốc thời gian.', 'Thông báo'); return; }
       cdRemaining = ms;
       cdState = 'running';
       const startedAt = Date.now();
@@ -234,7 +267,6 @@ button:hover { filter: brightness(1.15) }
     function pauseCountdown(){
       if (cdState !== 'running') return;
       cdState = 'paused';
-      // recompute remaining by reading display (safer to track time)
       const parts = cdDigits.textContent.split(':').map(Number);
       cdRemaining = ((parts[0]*60 + parts[1])*60 + parts[2]) * 1000;
       clearInterval(cdTimer);
@@ -297,7 +329,6 @@ button:hover { filter: brightness(1.15) }
       if (mode === 'loop') {
         clearInterval(loopInterval);
         loopInterval = setInterval(playBeep, 1200);
-        // auto stop loop on any interaction
         const stop = () => { clearInterval(loopInterval); loopInterval=null; window.removeEventListener('click', stop); window.removeEventListener('keydown', stop); };
         window.addEventListener('click', stop); window.addEventListener('keydown', stop);
       }
@@ -336,6 +367,68 @@ button:hover { filter: brightness(1.15) }
     function resumeSW(){ if(swState!=='paused') return; swStart=Date.now(); swState='running'; clearInterval(swTimer); swTimer=setInterval(tickSW,16); swPauseBtn.disabled=false; swResumeBtn.disabled=true; }
     function resetSW(){ clearInterval(swTimer); swTimer=null; swStart=0; swElapsed=0; swState='idle'; renderSW(0); lapsDiv.innerHTML=''; lapIdx=1; swPauseBtn.disabled=true; swResumeBtn.disabled=true; }
 
+    // ===== Notify (toast) =====
+    function showNotify(msg,type="info"){
+      const box=document.getElementById('notify');
+      box.textContent=msg;
+      box.style.display='block';
+      box.style.background= type==="success"?"#ecfdf5": type==="error"?"#fef2f2":"#fff";
+      box.style.borderColor= type==="success"?"#34d399": type==="error"?"#f87171":"var(--border)";
+      box.style.color= type==="success"?"#065f46": type==="error"?"#991b1b":"var(--text)";
+      setTimeout(()=>{box.style.display='none'},3000);
+    }
+
+    // ===== Modal helpers =====
+    function openModal({title="Thông báo", html="", okText="OK", cancelText=null, onOk=null, onCancel=null}){
+      const backdrop = document.getElementById('modal-backdrop');
+      const t = document.getElementById('modal-title');
+      const c = document.getElementById('modal-content');
+      const ok = document.getElementById('modal-ok');
+      const cancel = document.getElementById('modal-cancel');
+
+      t.textContent = title;
+      c.innerHTML = html;
+      ok.textContent = okText || 'OK';
+      cancel.style.display = cancelText? 'inline-block':'none';
+      cancel.textContent = cancelText || '';
+
+      const close = ()=>{ backdrop.style.display='none'; backdrop.setAttribute('aria-hidden','true'); ok.onclick=null; cancel.onclick=null; window.removeEventListener('keydown',onKey); };
+      const onKey = (e)=>{ if(e.key==='Escape'){ close(); onCancel && onCancel(); } };
+
+      ok.onclick = ()=>{ close(); onOk && onOk(); };
+      cancel.onclick = ()=>{ close(); onCancel && onCancel(); };
+
+      backdrop.style.display='flex'; backdrop.setAttribute('aria-hidden','false');
+      window.addEventListener('keydown', onKey);
+    }
+
+    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
+
+    function infoModal(message, title='Thông báo'){
+      openModal({title, html:`<p>${esc(message)}</p>`, okText:'Đóng'});
+    }
+    function confirmModal(message, title='Xác nhận'){
+      return new Promise((resolve)=>{
+        openModal({title, html:`<p>${esc(message)}</p>`, okText:'Đồng ý', cancelText:'Hủy', onOk:()=>resolve(true), onCancel:()=>resolve(false)});
+      });
+    }
+    function promptModal(label, defVal=''){
+      return new Promise((resolve)=>{
+        const id = 'modal-input-'+Math.random().toString(36).slice(2);
+        openModal({
+          title: label,
+          html:`<input id="${id}" type="text" value="${esc(defVal)}" autofocus>`,
+          okText:'OK',
+          cancelText:'Hủy',
+          onOk:()=>{ const v=document.getElementById(id).value; resolve(v); },
+          onCancel:()=>resolve(null)
+        });
+        setTimeout(()=>{ const el=document.getElementById(id); if(el) el.focus(); }, 10);
+      });
+    }
+    // Override alert to modal (non-blocking)
+    window.alert = (msg)=> infoModal(String(msg));
+
     // ===== Init =====
     (function init(){
       const preset = store.get('cd_preset', null);
@@ -345,5 +438,6 @@ button:hover { filter: brightness(1.15) }
       const lastTab = store.get('timer_tab','countdown');
       switchTab(lastTab);
     })();
-  </script></body>
+  </script>
+</body>
 </html>
