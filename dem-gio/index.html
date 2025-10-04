@@ -124,15 +124,18 @@
               </select>
             </div>
           </div>
+          
 
           <div class="btn-row">
-            <button class="primary" onclick="startCountdown()">Bắt đầu</button>
-            <button id="cdPauseBtn" class="ghost" onclick="pauseCountdown()" disabled>Tạm dừng</button>
-            <button class="ghost" onclick="resumeCountdown()" disabled id="cdResumeBtn">Tiếp tục</button>
-            <button class="danger" onclick="resetCountdown()">Đặt lại</button>
-            <button class="ghost" onclick="quickSet(5)">+5 phút</button>
-            <button class="ghost" onclick="quickSet(10)">+10 phút</button>
-            <button class="ghost" onclick="quickSet(25)">Pomodoro 25’</button>
+            <button class="primary" onclick="startCountdown(); showNotify('Đếm ngược bắt đầu','success')">Bắt đầu</button>
+            <button id="cdPauseBtn" class="ghost" onclick="pauseCountdown(); showNotify('Đếm ngược tạm dừng','info')" disabled>Tạm dừng</button>
+            <button class="ghost" onclick="resumeCountdown(); showNotify('Tiếp tục đếm ngược','success')" disabled id="cdResumeBtn">Tiếp tục</button>
+            <button class="danger" onclick="resetCountdown(); showNotify('Đã đặt lại đồng hồ','error')">Đặt lại</button>
+            <button class="ghost" onclick="quickSet(2); showNotify('Thiết lập nhanh +2 phút','info')">+2 phút</button>
+            <button class="ghost" onclick="quickSet(5); showNotify('Thiết lập nhanh +5 phút','info')">+5 phút</button>
+            <button class="ghost" onclick="quickSet(10); showNotify('Thiết lập nhanh 10 phút','info')">+10 phút</button>
+            <!-- THÊM MỚI: nút Reset KPI ngay sau Pomodoro -->
+            <button class="danger" onclick="resetKPI()">Reset KPI</button>
           </div>
 
           <div class="kpis">
@@ -210,8 +213,8 @@
       store.set('timer_tab', id);
     }
 
-    // ===== Countdown =====
-    let cdTimer = null, cdRemaining = 0, cdState = 'idle';
+    // ===== Countdown (persist + anti-drift) =====
+    let cdTimer = null, cdRemaining = 0, cdState = 'idle', cdDeadline = 0;
     let cdAccumulated = store.get('cd_total', 0), cdRuns = store.get('cd_runs', 0), cdLast = store.get('cd_last', null);
 
     const cdDigits = document.getElementById('countdownDigits');
@@ -224,7 +227,6 @@
     const elFinish = document.getElementById('cd-finish');
 
     function updateCdDisplay(ms){ cdDigits.textContent = fmtHMS(ms).replace(/\.\d{3}$/,''); }
-
     function readDurationMs(){
       const h = parseInt(elH.value||0,10);
       const m = parseInt(elM.value||0,10);
@@ -232,74 +234,143 @@
       return ((h*60 + m)*60 + s) * 1000;
     }
 
+    function persistCountdown(clear=false){
+      if (clear){
+        store.set('cd_state','idle');
+        store.set('cd_deadline',0);
+        store.set('cd_remaining',0);
+        return;
+      }
+      store.set('cd_state', cdState);
+      store.set('cd_deadline', cdDeadline);
+      store.set('cd_remaining', cdRemaining);
+      store.set('cd_finish', elFinish.value);
+    }
+
+    function restoreCountdown(){
+      const state = store.get('cd_state','idle');
+      const deadline = store.get('cd_deadline',0);
+      const remaining = store.get('cd_remaining',0);
+      const finish = store.get('cd_finish','beep');
+      if (finish) elFinish.value = finish;
+
+      if (state === 'running' && deadline){
+        cdState = 'running'; cdDeadline = deadline;
+        const left = deadline - Date.now();
+        if (left <= 0) { finishCountdown(); return; }
+        updateCdDisplay(left);
+        clearInterval(cdTimer); cdTimer = setInterval(loopCountdown, 50);
+        cdPauseBtn.disabled = false; cdResumeBtn.disabled = true;
+        return;
+      }
+      if (state === 'paused' && remaining){
+        cdState = 'paused'; cdRemaining = remaining;
+        updateCdDisplay(remaining);
+        cdPauseBtn.disabled = true; cdResumeBtn.disabled = false;
+        return;
+      }
+      cdState = 'idle'; updateCdDisplay(readDurationMs());
+    }
+
     function startCountdown(){
       let ms = readDurationMs();
       if (elTarget.value) {
         const t = new Date(elTarget.value).getTime();
-        const now = Date.now();
-        ms = Math.max(0, t - now);
+        ms = Math.max(0, t - Date.now());
       }
       if (!ms) { infoModal('Vui lòng nhập thời lượng > 0 hoặc chọn mốc thời gian.', 'Thông báo'); return; }
       cdRemaining = ms;
       cdState = 'running';
-      const startedAt = Date.now();
+      cdDeadline = Date.now() + cdRemaining; // mốc kết thúc tuyệt đối
+      persistCountdown();
       clearInterval(cdTimer);
-      cdTimer = setInterval(() => {
-        const elapsed = Date.now() - startedAt;
-        const left = cdRemaining - elapsed;
-        updateCdDisplay(left);
-        if (left <= 0) {
-          clearInterval(cdTimer);
-          cdState = 'done';
-          updateCdDisplay(0);
-          cdRuns++; store.set('cd_runs', cdRuns);
-          const lastDur = readDurationMs();
-          cdAccumulated += lastDur; store.set('cd_total', cdAccumulated);
-          cdLast = new Date().toLocaleString(); store.set('cd_last', cdLast);
-          updateKpis();
-          notifyFinish();
-        }
-      }, 50);
+      cdTimer = setInterval(loopCountdown, 50);
       cdPauseBtn.disabled = false; cdResumeBtn.disabled = true;
       store.set('cd_preset', {h: elH.value, m: elM.value, s: elS.value, target: elTarget.value, finish: elFinish.value});
     }
 
+    function loopCountdown(){
+      if (cdState !== 'running') return;
+      const left = cdDeadline - Date.now();
+      updateCdDisplay(left);
+      if (left <= 0) finishCountdown();
+    }
+
+    function finishCountdown(){
+      clearInterval(cdTimer);
+      cdState = 'done';
+      updateCdDisplay(0);
+      cdRuns++; store.set('cd_runs', cdRuns);
+      const lastDur = readDurationMs();
+      cdAccumulated += lastDur; store.set('cd_total', cdAccumulated);
+      cdLast = new Date().toLocaleString(); store.set('cd_last', cdLast);
+      updateKpis();
+      notifyFinish();
+      persistCountdown(true); // clear persisted state
+    }
+
     function pauseCountdown(){
       if (cdState !== 'running') return;
-      cdState = 'paused';
-      const parts = cdDigits.textContent.split(':').map(Number);
-      cdRemaining = ((parts[0]*60 + parts[1])*60 + parts[2]) * 1000;
+      const left = Math.max(0, cdDeadline - Date.now());
+      cdRemaining = left;
       clearInterval(cdTimer);
+      cdState = 'paused';
       cdPauseBtn.disabled = true; cdResumeBtn.disabled = false;
+      persistCountdown();
     }
 
     function resumeCountdown(){
       if (cdState !== 'paused') return;
-      const startedAt = Date.now();
+      cdDeadline = Date.now() + cdRemaining;
       cdState = 'running';
       clearInterval(cdTimer);
-      cdTimer = setInterval(() => {
-        const left = cdRemaining - (Date.now() - startedAt);
-        updateCdDisplay(left);
-        if (left <= 0) {
-          clearInterval(cdTimer);
-          cdState = 'done';
-          updateCdDisplay(0);
-          cdRuns++; store.set('cd_runs', cdRuns);
-          cdAccumulated += cdRemaining; store.set('cd_total', cdAccumulated);
-          cdLast = new Date().toLocaleString(); store.set('cd_last', cdLast);
-          updateKpis();
-          notifyFinish();
-        }
-      }, 50);
+      cdTimer = setInterval(loopCountdown, 50);
       cdPauseBtn.disabled = false; cdResumeBtn.disabled = true;
+      persistCountdown();
     }
 
-    function resetCountdown(){
-      clearInterval(cdTimer); cdTimer = null; cdState = 'idle';
-      updateCdDisplay(readDurationMs());
-      cdPauseBtn.disabled = true; cdResumeBtn.disabled = true;
-    }
+async function resetCountdown(){
+  const ok = await confirmModal(
+    'Bạn có chắc muốn đặt lại đồng hồ và xóa các thiết lập hiện tại?',
+    'Xác nhận Đặt lại'
+  );
+  if (!ok) return; // Người dùng bấm Hủy thì thôi, giữ nguyên trạng thái
+
+  // Dừng & về trạng thái idle
+  clearInterval(cdTimer); cdTimer = null; cdState = 'idle';
+
+  // Reset toàn bộ input về mặc định 0 hoặc trống
+  elH.value = 0;
+  elM.value = 0;
+  elS.value = 0;
+  elTarget.value = '';
+
+  // Cập nhật hiển thị theo giá trị mặc định
+  updateCdDisplay(readDurationMs());
+
+  // Vô hiệu nút tạm dừng / tiếp tục
+  cdPauseBtn.disabled = true;
+  cdResumeBtn.disabled = true;
+
+  // Xoá mốc đếm hiện tại & trạng thái lưu
+  cdDeadline = 0;
+  cdRemaining = 0;
+
+  // Lưu preset mới (0/0/0 + target trống) để sau reload vẫn giữ đúng
+  store.set('cd_preset', {
+    h: elH.value,
+    m: elM.value,
+    s: elS.value,
+    target: elTarget.value,
+    finish: elFinish.value
+  });
+
+  // Xoá trạng thái đếm đang chạy trong localStorage
+  persistCountdown(true);
+
+  // Thông báo
+  showNotify('Đã đặt lại đồng hồ', 'error');
+}
 
     function quickSet(min){
       elTarget.value = '';
@@ -340,7 +411,7 @@
       document.getElementById('cdLast').textContent = cdLast || '—';
     }
 
-    // ===== Stopwatch =====
+    // ===== Stopwatch (persist) =====
     let swTimer=null, swStart=0, swElapsed=0, swState='idle', lapIdx=1;
     const swDigits = document.getElementById('swDigits');
     const swPauseBtn = document.getElementById('swPauseBtn');
@@ -361,13 +432,72 @@
       clearInterval(swTimer);
       swTimer = setInterval(tickSW, 16);
       swPauseBtn.disabled=false; swResumeBtn.disabled=true;
+      persistSW();
     }
-    function lapSW(){ if(swState!=='running') return; const t=swElapsed+(Date.now()-swStart); const el=document.createElement('div'); el.textContent=`Lap ${lapIdx++}: ${fmtHMS(t)}`; lapsDiv.prepend(el); }
-    function pauseSW(){ if(swState!=='running') return; swElapsed += Date.now()-swStart; clearInterval(swTimer); swState='paused'; swPauseBtn.disabled=true; swResumeBtn.disabled=false; }
-    function resumeSW(){ if(swState!=='paused') return; swStart=Date.now(); swState='running'; clearInterval(swTimer); swTimer=setInterval(tickSW,16); swPauseBtn.disabled=false; swResumeBtn.disabled=true; }
-    function resetSW(){ clearInterval(swTimer); swTimer=null; swStart=0; swElapsed=0; swState='idle'; renderSW(0); lapsDiv.innerHTML=''; lapIdx=1; swPauseBtn.disabled=true; swResumeBtn.disabled=true; }
+    function lapSW(){
+      if(swState!=='running') return;
+      const t=swElapsed+(Date.now()-swStart);
+      const el=document.createElement('div');
+      el.textContent=`Lap ${lapIdx++}: ${fmtHMS(t)}`;
+      lapsDiv.prepend(el);
+    }
+    function pauseSW(){
+      if(swState!=='running') return;
+      swElapsed += Date.now()-swStart;
+      clearInterval(swTimer);
+      swState='paused';
+      swPauseBtn.disabled=true; swResumeBtn.disabled=false;
+      persistSW();
+    }
+    function resumeSW(){
+      if(swState!=='paused') return;
+      swStart=Date.now();
+      swState='running';
+      clearInterval(swTimer);
+      swTimer=setInterval(tickSW,16);
+      swPauseBtn.disabled=false; swResumeBtn.disabled=true;
+      persistSW();
+    }
+    async function resetSW(){
+  const ok = await confirmModal('Bạn có chắc muốn đặt lại bấm giờ và xóa toàn bộ lap?', 'Xác nhận Đặt lại');
+  if (!ok) return;
 
-    // ===== Notify (toast) =====
+  clearInterval(swTimer); swTimer=null;
+  swStart=0; swElapsed=0; swState='idle';
+  renderSW(0);
+  lapsDiv.innerHTML='';
+  lapIdx=1;
+  swPauseBtn.disabled=true; swResumeBtn.disabled=true;
+
+  showNotify('Đã đặt lại bấm giờ','error');
+}
+
+    function persistSW(clear=false){
+      if (clear){ store.set('sw_state','idle'); store.set('sw_start',0); store.set('sw_elapsed',0); return; }
+      store.set('sw_state', swState);
+      store.set('sw_start', swStart);
+      store.set('sw_elapsed', swElapsed);
+    }
+    function restoreSW(){
+      const state = store.get('sw_state','idle');
+      const start = store.get('sw_start',0);
+      const elapsed = store.get('sw_elapsed',0);
+      swState = state; swStart = start; swElapsed = elapsed;
+      if (state==='running' && start){
+        clearInterval(swTimer); swTimer=setInterval(tickSW,16);
+        swPauseBtn.disabled=false; swResumeBtn.disabled=true;
+        return;
+      }
+      if (state==='paused'){
+        renderSW(elapsed);
+        swPauseBtn.disabled=true; swResumeBtn.disabled=false;
+        return;
+      }
+      renderSW(0);
+      swPauseBtn.disabled=true; swResumeBtn.disabled=true;
+    }
+
+    // ===== Toast helper (bổ sung) =====
     function showNotify(msg,type="info"){
       const box=document.getElementById('notify');
       box.textContent=msg;
@@ -379,6 +509,7 @@
     }
 
     // ===== Modal helpers =====
+    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
     function openModal({title="Thông báo", html="", okText="OK", cancelText=null, onOk=null, onCancel=null}){
       const backdrop = document.getElementById('modal-backdrop');
       const t = document.getElementById('modal-title');
@@ -401,8 +532,6 @@
       backdrop.style.display='flex'; backdrop.setAttribute('aria-hidden','false');
       window.addEventListener('keydown', onKey);
     }
-
-    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
 
     function infoModal(message, title='Thông báo'){
       openModal({title, html:`<p>${esc(message)}</p>`, okText:'Đóng'});
@@ -429,6 +558,20 @@
     // Override alert to modal (non-blocking)
     window.alert = (msg)=> infoModal(String(msg));
 
+    // ===== Reset KPI =====
+    async function resetKPI(){
+      const ok = await confirmModal('Reset toàn bộ KPI? (Đã chạy, Tổng thời gian, Lần gần nhất)','Reset KPI');
+      if(!ok) return;
+      // Xoá dữ liệu KPI
+      store.set('cd_runs', 0);
+      store.set('cd_total', 0);
+      store.set('cd_last', null);
+      // Cập nhật biến đang dùng
+      cdRuns = 0; cdAccumulated = 0; cdLast = null;
+      updateKpis();
+      showNotify('Đã reset KPI','success');
+    }
+
     // ===== Init =====
     (function init(){
       const preset = store.get('cd_preset', null);
@@ -437,6 +580,10 @@
       updateKpis();
       const lastTab = store.get('timer_tab','countdown');
       switchTab(lastTab);
+
+      // Khôi phục trạng thái sau reload
+      restoreCountdown();
+      restoreSW();
     })();
   </script>
 </body>
